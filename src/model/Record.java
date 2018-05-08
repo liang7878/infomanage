@@ -2,9 +2,13 @@ package model;
 
 import org.apache.poi.ss.usermodel.Row;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class Record {
     boolean isLegal = false;
-    String type = "F";
+    String type = "Fixation";
     Long FixationNumber = 0l;
     //    String ExportDate = null;
 //    String StudioVersionRec = null;
@@ -33,6 +37,7 @@ public class Record {
 //    String RecordingTimestamp = null;
 //    String LocalTimeStamp = null;
     Long EyeTrackerTimestamp = null;
+
 //    String MouseEventIndex = null;
 //    String MouseEvent = null;
 //    String MouseEventX_ADCSpx = null;
@@ -54,6 +59,8 @@ public class Record {
     Long GazeEventDuration = null;
     Integer FixationPointX_MCSpx = null;
     Integer FixationPointY_MCSpx = null;
+    Integer ClickX_MCSpx = null;
+    Integer ClickY_MCSpx = null;
 //    String SaccadicAmplitude = null;
 //    String AbsoluteSaccadicDirection = null;
 //    String RelativeSaccadicDirection = null;
@@ -93,17 +100,36 @@ public class Record {
 //    String PupilGlassesRight = null;
 
     public Record(Row row) {
-        if(row.getCell(44) != null && !row.getCell(44).getStringCellValue().equals("Fixation")) {
-            this.isLegal = false;
-        }else {
+        if(row.getCell(28) != null && !row.getCell(28).getStringCellValue().equals("")) {
+            this.type = "click";
+            if(row.getCell(31).getStringCellValue().equals("") || row.getCell(32).getStringCellValue().equals("")) {
+                this.ClickX_MCSpx = -1;
+                this.ClickY_MCSpx = -1;
+            } else {
+                this.ClickX_MCSpx = Integer.valueOf(row.getCell(31).getStringCellValue());
+                this.ClickY_MCSpx = Integer.valueOf(row.getCell(32).getStringCellValue());
+            }
+
+            this.ParticipantName = row.getCell(4).getStringCellValue();
+
+            this.EyeTrackerTimestamp = getTimestamp(row.getCell(6).getStringCellValue(), row.getCell(25).getStringCellValue());
+
+            this.isLegal = true;
+        }
+
+        if(this.type.equals("click") && row.getCell(44).getStringCellValue().equals("Fixation")) {
+            this.type = "both";
+        }
+
+        if(row.getCell(28).getStringCellValue().equals("") && !row.getCell(44).getStringCellValue().equals("Fixation")) {
+            this.isLegal =false;
+        } else if(row.getCell(44).getStringCellValue().equals("Fixation")) {
             this.GazeEventType = row.getCell(44).getStringCellValue();
             this.FixationIndex = Long.valueOf(row.getCell(42).getStringCellValue());
             this.ParticipantName = row.getCell(4).getStringCellValue();
-            if(!row.getCell(26).getStringCellValue().equals("")) {
-                this.EyeTrackerTimestamp = Long.valueOf(row.getCell(26).getStringCellValue());
-            } else {
-                this.EyeTrackerTimestamp = Long.MIN_VALUE;
-            }
+
+            this.EyeTrackerTimestamp = getTimestamp(row.getCell(6).getStringCellValue(), row.getCell(25).getStringCellValue());
+
 
             if(!row.getCell(45).getStringCellValue().equals("")) {
                 this.GazeEventDuration = Long.valueOf(row.getCell(45).getStringCellValue());
@@ -128,6 +154,8 @@ public class Record {
 
 //            this.FixationPointX_MCSpx = Integer.valueOf(row.getCell(46).getStringCellValue());
 //            this.FixationPointY_MCSpx = Integer.valueOf(row.getCell(47).getStringCellValue());
+            this.isLegal = true;
+        } else if(!row.getCell(28).getStringCellValue().equals("")) {
             this.isLegal = true;
         }
     }
@@ -171,6 +199,81 @@ public class Record {
 
     public void setLegal(boolean legal) {
         isLegal = legal;
+    }
+
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Long getFixationNumber() {
+        return FixationNumber;
+    }
+
+    public void setFixationNumber(Long fixationNumber) {
+        FixationNumber = fixationNumber;
+    }
+
+    public String getParticipantName() {
+        return ParticipantName;
+    }
+
+    public void setParticipantName(String participantName) {
+        ParticipantName = participantName;
+    }
+
+    public Long getFixationIndex() {
+        return FixationIndex;
+    }
+
+    public void setFixationIndex(Long fixationIndex) {
+        FixationIndex = fixationIndex;
+    }
+
+    public String getGazeEventType() {
+        return GazeEventType;
+    }
+
+    public void setGazeEventType(String gazeEventType) {
+        GazeEventType = gazeEventType;
+    }
+
+    public Integer getClickX_MCSpx() {
+        return ClickX_MCSpx;
+    }
+
+    public void setClickX_MCSpx(Integer clickX_MCSpx) {
+        ClickX_MCSpx = clickX_MCSpx;
+    }
+
+    public Integer getClickY_MCSpx() {
+        return ClickY_MCSpx;
+    }
+
+    public void setClickY_MCSpx(Integer clickY_MCSpx) {
+        ClickY_MCSpx = clickY_MCSpx;
+    }
+
+
+
+    public long getTimestamp(String dateStr, String timeStr) {
+        String format = "yyyy/MM/dd HH:mm:ss.SSS";
+
+        Date date = null;
+        SimpleDateFormat formatter = new SimpleDateFormat(format);
+        try {
+            date = formatter.parse(dateStr + " " + timeStr);
+            return date.getTime();
+        } catch (ParseException e) {
+
+            e.printStackTrace();
+            return 0l;
+        }
+
     }
 }
 

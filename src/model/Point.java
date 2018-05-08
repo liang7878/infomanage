@@ -16,6 +16,8 @@ public class Point {
     Long startTimestamp = 0l;
     Long stopTimestamp = 0l;
     Long fixationGap = 0l;
+    Boolean inAOI1 = false;
+    Boolean inAOI2 = false;
     public Point() {
 
     }
@@ -49,6 +51,21 @@ public class Point {
         } else {
             this.setStopTimestamp(record.getEyeTrackerTimestamp());
         }
+
+        Integer x = record.getFixationPointX_MCSpx();
+        Integer y = record.getFixationPointY_MCSpx();
+
+        if(x>1.56 && x<1918.42 && y>1246.11 && y<3430.33) {
+            this.inAOI1 = true;
+        }
+
+        //in aoi2?
+        if(x>395.57 &&x<1530.67 && y>3325.57 && y<3403.75) {
+            this.inAOI2 = true;
+        }
+
+
+
         return true;
     }
 
@@ -194,5 +211,21 @@ public class Point {
 
     public void setAQIIndex(Integer AQIIndex) {
         this.AQIIndex = AQIIndex;
+    }
+
+    public Boolean getInAOI1() {
+        return inAOI1;
+    }
+
+    public void setInAOI1(Boolean inAOI1) {
+        this.inAOI1 = inAOI1;
+    }
+
+    public Boolean getInAOI2() {
+        return inAOI2;
+    }
+
+    public void setInAOI2(Boolean inAOI2) {
+        this.inAOI2 = inAOI2;
     }
 }

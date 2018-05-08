@@ -1,40 +1,130 @@
 package model;
 
+import java.util.ArrayList;
+
 public class AOI {
-    private boolean isEmpty = true;
     String ParticipantName = null;
-    Integer AQIIndex = -1;
-    Long FixationNumber = 0l;
-    Long GazeEventDuration = 0l;
-    Long fixationGap = 0l;
+    Long AQIFixationNumber = 0l;
+    Long INTERFACEFixationNumber = 0l;
+    Double div = 0d;
+    Long firstFixationTimestamp = 0l;
+    Long firstClickTimestamp = 0l;
+    Long sub = 0l;
 
 
-    public boolean addPoint(Point point) {
-        boolean result = false;
-        if(this.isEmpty) {
-            this.ParticipantName = point.getParticipantName();
-            this.AQIIndex = point.getAQIIndex();
-            this.FixationNumber = 1l;
-            this.GazeEventDuration = point.getGazeEventDuration();
-            this.fixationGap = Math.abs(point.getStopTimestamp())-Math.abs(point.getStartTimestamp());
-            this.isEmpty = false;
-            return true;
+    public AOI(String name, ArrayList<Point> points, ArrayList<Click> clicks) {
+        this.ParticipantName = name;
+
+        Click click = null;
+        Point firstPoint = null;
+        if(points == null || points.size() == 0) {
+            if(clicks == null || clicks.size() == 0) {
+                this.AQIFixationNumber = -1l;
+                this.INTERFACEFixationNumber = -1l;
+                this.div = -1d;
+                this.firstFixationTimestamp = -1l;
+                this.firstClickTimestamp = -1l;
+                this.sub = -1l;
+            } else {
+                for (int i = 0; i < points.size(); i++) {
+                    Point tmp = points.get(i);
+                    if(tmp.getInAOI1()) {
+                        this.INTERFACEFixationNumber +=1;
+                    }
+                    if(tmp.getInAOI2()) {
+                        this.AQIFixationNumber +=1;
+                        if(firstPoint == null) {
+                            firstPoint = tmp;
+                        } else {
+                            if(firstPoint.getStartTimestamp() > tmp.getStartTimestamp()) {
+                                firstPoint =tmp;
+                            }
+                        }
+                    }
+                }
+            }
+        } else if(clicks == null || clicks.size() == 0) {
+            if(points == null || points.size() == 0) {
+                this.AQIFixationNumber = -1l;
+                this.INTERFACEFixationNumber = -1l;
+                this.div = -1d;
+                this.firstFixationTimestamp = -1l;
+                this.firstClickTimestamp = -1l;
+                this.sub = -1l;
+            } else {
+                for (int i = 0; i < points.size(); i++) {
+                    Point tmp = points.get(i);
+                    if(tmp.getInAOI1()) {
+                        this.INTERFACEFixationNumber +=1;
+                    }
+                    if(tmp.getInAOI2()) {
+                        this.AQIFixationNumber +=1;
+                        if(firstPoint == null) {
+                            firstPoint = tmp;
+                        } else {
+                            if(firstPoint.getStartTimestamp() > tmp.getStartTimestamp()) {
+                                firstPoint =tmp;
+                            }
+                        }
+                    }
+                }
+            }
         } else {
-            if(this.ParticipantName.equals(point.getParticipantName()) && this.AQIIndex.equals(point.getAQIIndex())) {
-                this.FixationNumber += 1;
-                this.GazeEventDuration += point.getGazeEventDuration();
-                this.fixationGap += (Math.abs(point.getStopTimestamp())-Math.abs(point.getStartTimestamp()));
+
+            for (int i = 0; i < clicks.size(); i++) {
+
+                if(clicks.get(i).getInAQI2()) {
+                    if(click==null){
+                        click = clicks.get(i);
+                    } else {
+                        if(click.getEyeTrackerTimestamp() > clicks.get(i).getEyeTrackerTimestamp()) {
+                            click = clicks.get(i);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < points.size(); i++) {
+                Point tmp = points.get(i);
+                if(tmp.getInAOI1()) {
+                    this.INTERFACEFixationNumber +=1;
+                }
+                if(tmp.getInAOI2()) {
+                    this.AQIFixationNumber +=1;
+                    if(firstPoint == null) {
+                        firstPoint = tmp;
+                    } else {
+                        if(firstPoint.getStartTimestamp() > tmp.getStartTimestamp()) {
+                            firstPoint =tmp;
+                        }
+                    }
+                }
             }
         }
-        return result;
-    }
 
-    public boolean isEmpty() {
-        return isEmpty;
-    }
+        if(click == null) {
+            this.firstClickTimestamp = -1l;
+        } else {
+            this.firstClickTimestamp = click.getEyeTrackerTimestamp();
+        }
+        if(firstPoint == null) {
+            this.firstFixationTimestamp = -1l;
+        } else {
+            this.firstFixationTimestamp = firstPoint.getStartTimestamp();
+        }
 
-    public void setEmpty(boolean empty) {
-        isEmpty = empty;
+        if(click !=null && firstPoint!=null) {
+            this.sub = click.getEyeTrackerTimestamp() - firstPoint.getStartTimestamp();
+        } else {
+            this.sub = -1l;
+        }
+
+        if(this.INTERFACEFixationNumber != 0) {
+            this.div = Double.valueOf(String.valueOf(this.AQIFixationNumber))/Double.valueOf(String.valueOf(this.INTERFACEFixationNumber));
+        } else {
+            this.div = -1d;
+        }
+
     }
 
     public String getParticipantName() {
@@ -45,35 +135,51 @@ public class AOI {
         ParticipantName = participantName;
     }
 
-    public Integer getAQIIndex() {
-        return AQIIndex;
+    public Long getAQIFixationNumber() {
+        return AQIFixationNumber;
     }
 
-    public void setAQIIndex(Integer AQIIndex) {
-        this.AQIIndex = AQIIndex;
+    public void setAQIFixationNumber(Long AQIFixationNumber) {
+        this.AQIFixationNumber = AQIFixationNumber;
     }
 
-    public Long getFixationNumber() {
-        return FixationNumber;
+    public Long getINTERFACEFixationNumber() {
+        return INTERFACEFixationNumber;
     }
 
-    public void setFixationNumber(Long fixationNumber) {
-        FixationNumber = fixationNumber;
+    public void setINTERFACEFixationNumber(Long INTERFACEFixationNumber) {
+        this.INTERFACEFixationNumber = INTERFACEFixationNumber;
     }
 
-    public Long getGazeEventDuration() {
-        return GazeEventDuration;
+    public Double getDiv() {
+        return div;
     }
 
-    public void setGazeEventDuration(Long gazeEventDuration) {
-        GazeEventDuration = gazeEventDuration;
+    public void setDiv(Double div) {
+        this.div = div;
     }
 
-    public Long getFixationGap() {
-        return fixationGap;
+    public Long getFirstFixationTimestamp() {
+        return firstFixationTimestamp;
     }
 
-    public void setFixationGap(Long fixationGap) {
-        this.fixationGap = fixationGap;
+    public void setFirstFixationTimestamp(Long firstFixationTimestamp) {
+        this.firstFixationTimestamp = firstFixationTimestamp;
+    }
+
+    public Long getFirstClickTimestamp() {
+        return firstClickTimestamp;
+    }
+
+    public void setFirstClickTimestamp(Long firstClickTimestamp) {
+        this.firstClickTimestamp = firstClickTimestamp;
+    }
+
+    public Long getSub() {
+        return sub;
+    }
+
+    public void setSub(Long sub) {
+        this.sub = sub;
     }
 }

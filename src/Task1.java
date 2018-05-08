@@ -1,5 +1,6 @@
 import com.monitorjbl.xlsx.StreamingReader;
 import model.AOI;
+import model.Click;
 import model.Point;
 import model.Record;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -18,6 +19,8 @@ public class Task1 {
     public static HashMap<String, ArrayList<Point>> resultHashmap = new HashMap<>(5000);
     public static ArrayList<String> deathNote = new ArrayList<>();
     public static HashMap<String, HashMap<Integer, AOI>> finalresult = new HashMap<>();
+    public static HashMap<String, ArrayList<Click>> clickResult = new HashMap<>();
+    public static ArrayList<AOI> task2result = new ArrayList<>();
 
 
     public static void main(String[] args) {
@@ -41,16 +44,8 @@ public class Task1 {
 
 
         for(String key: resultHashmap.keySet()) {
-            ArrayList<Point> points = resultHashmap.get(key);
-            HashMap<Integer, AOI> tmp = new HashMap<>();
-            for (int i = 0; i < points.size(); i++) {
-                Point point = points.get(i);
-                if(tmp.get(point.getAQIIndex()) == null) {
-                    tmp.put(point.getAQIIndex(), new AOI());
-                }
-                tmp.get(point.getAQIIndex()).addPoint(point);
-            }
-            finalresult.put(key, tmp);
+            if(deathNote.contains(key)) continue;
+            task2result.add(new AOI(key, resultHashmap.get(key), clickResult.get(key)));
         }
 
         File file = new File(outputPath);
@@ -59,29 +54,27 @@ public class Task1 {
         Sheet sheet = workbook.createSheet();
         Row titleRow = sheet.createRow(0);
         titleRow.createCell(0).setCellValue("ParticipantName");
-        titleRow.createCell(1).setCellValue("AQIIndex");
-        titleRow.createCell(2).setCellValue("FixationNumber");
-        titleRow.createCell(3).setCellValue("FixationDuration");
-        titleRow.createCell(4).setCellValue("fixationGap");
+        titleRow.createCell(1).setCellValue("AQI-FixationNumber");
+        titleRow.createCell(2).setCellValue("Interface-FixationNumber");
+        titleRow.createCell(3).setCellValue("Fixation-div");
+        titleRow.createCell(4).setCellValue("FirstFixationTime");
+        titleRow.createCell(5).setCellValue("FirstClickTime");
+        titleRow.createCell(6).setCellValue("Click-FixationTime");
         int index=1;
 
-        for(String key : finalresult.keySet()) {
-            if(deathNote.contains(key)) {
-                continue;
-            }
 
-            for(Integer aqi : finalresult.get(key).keySet())  {
-                AOI aoi = finalresult.get(key).get(aqi);
-                Row record = sheet.createRow(index);
-                record.createCell(index);
-                record.createCell(0).setCellValue(aoi.getParticipantName());
-                record.createCell(1).setCellValue(aoi.getAQIIndex());
-                record.createCell(2).setCellValue(aoi.getFixationNumber());
-                record.createCell(3).setCellValue(aoi.getGazeEventDuration());
-                record.createCell(4).setCellValue(aoi.getFixationGap());
-                index++;
-            }
 
+        for (int i = 0; i < task2result.size(); i++) {
+            AOI aoi = task2result.get(i);
+            Row record = sheet.createRow(index);
+            record.createCell(0).setCellValue(aoi.getParticipantName());
+            record.createCell(1).setCellValue(aoi.getAQIFixationNumber());
+            record.createCell(2).setCellValue(aoi.getINTERFACEFixationNumber());
+            record.createCell(3).setCellValue(aoi.getDiv());
+            record.createCell(4).setCellValue(aoi.getFirstFixationTimestamp());
+            record.createCell(5).setCellValue(aoi.getFirstClickTimestamp());
+            record.createCell(6).setCellValue(aoi.getSub());
+            index ++;
         }
 
         try {
@@ -119,27 +112,83 @@ public class Task1 {
             if(row.getRowNum() == 0) {
                 continue;
             }
+//            if(row.getRowNum() == 53352 ||
+//                    row.getRowNum() == 166637 ||
+//                    row.getRowNum() == 357171 ||
+//                    row.getRowNum() == 357571 ||
+//                    row.getRowNum() == 357919 ||
+//                    row.getRowNum() == 358287 ||
+//                    row.getRowNum() == 359819 ||
+//                    row.getRowNum() == 387803 ||
+//                    row.getRowNum() == 391851 ||
+//                    row.getRowNum() ==  394292||
+//                    row.getRowNum() ==  395001||
+//                    row.getRowNum() == 396437 ||
+//                    row.getRowNum() == 397601 ||
+//                    row.getRowNum() == 399409 ||
+//                    row.getRowNum() == 399785 ||
+//                    row.getRowNum() == 434744) {
+//                continue;
+//            }
+
             System.out.println("processing row " + (row.getRowNum()+1));
             //遍历所有的列
             Record record = new Record(row);
             if(record.isLegal()) {
-                if(point.addRecord(record)){
-                    continue;
-                }else {
-                    if(resultHashmap.get(point.getParticipantName()) == null) {
-                        resultHashmap.put(point.getParticipantName(), new ArrayList<>(1000));
+                if(record.getType().equals("click")) {
+
+
+                    Click click = new Click(record);
+
+                    if(!click.getInAOI1() && !click.getInAQI2()) {
+
+                    } else {
+                        if(clickResult.get(record.getParticipantName()) == null) {
+                            clickResult.put(record.getParticipantName(), new ArrayList<>());
+                        }
+                        clickResult.get(record.getParticipantName()).add(new Click(record));
                     }
 
-                    resultHashmap.get(point.getParticipantName()).add(point);
+                } else if(record.getType().equals("Fixation")) {
+                    if(point.addRecord(record)){
+                        continue;
+                    }else {
+                        if(resultHashmap.get(point.getParticipantName()) == null) {
+                            resultHashmap.put(point.getParticipantName(), new ArrayList<>(1000));
+                        }
+
+                        resultHashmap.get(point.getParticipantName()).add(point);
 //                    result.add(point);
-                    point = new Point();
-                    point.addRecord(record);
+                        point = new Point();
+                        point.addRecord(record);
+                    }
+                } else if(record.getType().equals("both")) {
+                    Click click = new Click(record);
+
+                    if(!click.getInAOI1() && !click.getInAQI2()) {
+
+                    } else {
+                        if(clickResult.get(record.getParticipantName()) == null) {
+                            clickResult.put(record.getParticipantName(), new ArrayList<>());
+                        }
+                        clickResult.get(record.getParticipantName()).add(new Click(record));
+                    }
+
+                    if(point.addRecord(record)){
+                        continue;
+                    }else {
+                        if(resultHashmap.get(point.getParticipantName()) == null) {
+                            resultHashmap.put(point.getParticipantName(), new ArrayList<>(1000));
+                        }
+
+                        resultHashmap.get(point.getParticipantName()).add(point);
+//                    result.add(point);
+                        point = new Point();
+                        point.addRecord(record);
+                    }
                 }
             }
 
-            if(row.getRowNum() == 187130) {
-                System.out.println("break");
-            }
         }
 
         System.out.println("finish");
