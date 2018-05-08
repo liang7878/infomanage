@@ -55,12 +55,13 @@ public class Point {
         Integer x = record.getFixationPointX_MCSpx();
         Integer y = record.getFixationPointY_MCSpx();
 
-        if(x>1.56 && x<1918.42 && y>1246.11 && y<3430.33) {
+        //in aoi1?
+        if(x>325.32 && x<1477.89 && y>249.8 && y<1189.75) {
             this.inAOI1 = true;
         }
 
         //in aoi2?
-        if(x>395.57 &&x<1530.67 && y>3325.57 && y<3403.75) {
+        if(x>421.76 &&x<721.52 && y>1049.16 && y<1093.31) {
             this.inAOI2 = true;
         }
 

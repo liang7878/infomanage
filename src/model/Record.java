@@ -100,22 +100,22 @@ public class Record {
 //    String PupilGlassesRight = null;
 
     public Record(Row row) {
-        if(row.getCell(28) != null && !row.getCell(28).getStringCellValue().equals("")) {
-            this.type = "click";
-            if(row.getCell(31).getStringCellValue().equals("") || row.getCell(32).getStringCellValue().equals("")) {
-                this.ClickX_MCSpx = -1;
-                this.ClickY_MCSpx = -1;
-            } else {
-                this.ClickX_MCSpx = Integer.valueOf(row.getCell(31).getStringCellValue());
-                this.ClickY_MCSpx = Integer.valueOf(row.getCell(32).getStringCellValue());
-            }
-
-            this.ParticipantName = row.getCell(4).getStringCellValue();
-
-            this.EyeTrackerTimestamp = getTimestamp(row.getCell(6).getStringCellValue(), row.getCell(25).getStringCellValue());
-
-            this.isLegal = true;
-        }
+//        if(row.getCell(28) != null && !row.getCell(28).getStringCellValue().equals("")) {
+//            this.type = "click";
+//            if(row.getCell(31).getStringCellValue().equals("") || row.getCell(32).getStringCellValue().equals("")) {
+//                this.ClickX_MCSpx = -1;
+//                this.ClickY_MCSpx = -1;
+//            } else {
+//                this.ClickX_MCSpx = Integer.valueOf(row.getCell(31).getStringCellValue());
+//                this.ClickY_MCSpx = Integer.valueOf(row.getCell(32).getStringCellValue());
+//            }
+//
+//            this.ParticipantName = row.getCell(4).getStringCellValue();
+//
+//            this.EyeTrackerTimestamp = getTimestamp(row.getCell(6).getStringCellValue(), row.getCell(25).getStringCellValue());
+//
+//            this.isLegal = true;
+//        }
 
         if(this.type.equals("click") && row.getCell(44).getStringCellValue().equals("Fixation")) {
             this.type = "both";
@@ -123,8 +123,8 @@ public class Record {
 
         if(row.getCell(28).getStringCellValue().equals("") && !row.getCell(44).getStringCellValue().equals("Fixation")) {
             this.isLegal =false;
-        } else if(row.getCell(44).getStringCellValue().equals("Fixation")) {
-            this.GazeEventType = row.getCell(44).getStringCellValue();
+        } else if(row.getCell(44).getStringCellValue().replaceAll("\"", "").equals("Fixation")) {
+            this.GazeEventType = row.getCell(44).getStringCellValue().replaceAll("\"", "");
             this.FixationIndex = Long.valueOf(row.getCell(42).getStringCellValue());
             this.ParticipantName = row.getCell(4).getStringCellValue();
 
@@ -141,13 +141,13 @@ public class Record {
             if(row.getCell(46).getStringCellValue().equals("")) {
                 this.FixationPointX_MCSpx = Integer.MIN_VALUE;
             } else {
-                this.FixationPointX_MCSpx = Integer.valueOf(row.getCell(46).getStringCellValue());
+                this.FixationPointX_MCSpx = Integer.valueOf(row.getCell(46).getStringCellValue().replaceAll("\"", ""));
             }
 
             if(row.getCell(47).getStringCellValue().equals("")) {
                 this.FixationPointY_MCSpx = Integer.MIN_VALUE;
             } else {
-                this.FixationPointY_MCSpx = Integer.valueOf(row.getCell(47).getStringCellValue());
+                this.FixationPointY_MCSpx = Integer.valueOf(row.getCell(47).getStringCellValue().replaceAll("\"", ""));
             }
 
 
@@ -261,7 +261,7 @@ public class Record {
 
 
     public long getTimestamp(String dateStr, String timeStr) {
-        String format = "yyyy/MM/dd HH:mm:ss.SSS";
+        String format = "\"yyyy/MM/dd\" \"HH:mm:ss.SSS\"";
 
         Date date = null;
         SimpleDateFormat formatter = new SimpleDateFormat(format);

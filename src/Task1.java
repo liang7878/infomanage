@@ -1,10 +1,5 @@
 import com.monitorjbl.xlsx.StreamingReader;
-import model.AOI;
-import model.Click;
-import model.Point;
-import model.Record;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
+import model.*;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -21,6 +16,7 @@ public class Task1 {
     public static HashMap<String, HashMap<Integer, AOI>> finalresult = new HashMap<>();
     public static HashMap<String, ArrayList<Click>> clickResult = new HashMap<>();
     public static ArrayList<AOI> task2result = new ArrayList<>();
+    public static ArrayList<Task4Output> task4Outputs = new ArrayList<>();
 
 
     public static void main(String[] args) {
@@ -37,7 +33,7 @@ public class Task1 {
         deathNote.add("P38杨依依");
 
         try{
-            readXlsx("c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/1.xlsx");
+            readXlsx("c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/4.xlsx");
         } catch (IOException ioe) {
             System.out.println(ioe);
         }
@@ -45,7 +41,41 @@ public class Task1 {
 
         for(String key: resultHashmap.keySet()) {
             if(deathNote.contains(key)) continue;
-            task2result.add(new AOI(key, resultHashmap.get(key), clickResult.get(key)));
+            ArrayList<Task4Output> tmpResult = new ArrayList<>();
+            ArrayList<Point> tmp = resultHashmap.get(key);
+            long AQI1Duration =0l;
+            long AQI2Duration =0l;
+            long fixationNo1 = 0l;
+            long fixationNo2 = 0l;
+            for (int i = 0; i < tmp.size(); i++) {
+                Point point = tmp.get(i);
+                if(point.getInAOI1()) {
+                    fixationNo1++;
+                    AQI1Duration += point.getGazeEventDuration();
+                }
+                if(point.getInAOI2()) {
+                    fixationNo2++;
+                    AQI2Duration += point.getGazeEventDuration();
+                }
+                Task4Output task4Output = new Task4Output(point);
+                if(task4Output.getAOIIndex() != -1) {
+                    tmpResult.add(new Task4Output(point));
+                }
+            }
+
+            for (int i = 0; i < tmpResult.size(); i++) {
+                if(tmpResult.get(i).getAOIIndex() == 1) {
+                    tmpResult.get(i).setFixationDurationAll(AQI1Duration);
+                    tmpResult.get(i).setFixationNumber(fixationNo1);
+                }
+                if(tmpResult.get(i).getAOIIndex() == 2) {
+                    tmpResult.get(i).setFixationDurationAll(AQI2Duration);
+                    tmpResult.get(i).setFixationNumber(fixationNo2);
+                }
+
+                tmpResult.get(i).setFixationDiv(Double.valueOf(String.valueOf(fixationNo2))/Double.valueOf(String.valueOf(fixationNo1)));
+            }
+            task4Outputs.addAll(tmpResult);
         }
 
         File file = new File(outputPath);
@@ -54,26 +84,26 @@ public class Task1 {
         Sheet sheet = workbook.createSheet();
         Row titleRow = sheet.createRow(0);
         titleRow.createCell(0).setCellValue("ParticipantName");
-        titleRow.createCell(1).setCellValue("AQI-FixationNumber");
-        titleRow.createCell(2).setCellValue("Interface-FixationNumber");
-        titleRow.createCell(3).setCellValue("Fixation-div");
-        titleRow.createCell(4).setCellValue("FirstFixationTime");
-        titleRow.createCell(5).setCellValue("FirstClickTime");
-        titleRow.createCell(6).setCellValue("Click-FixationTime");
+        titleRow.createCell(1).setCellValue("AOIIndex");
+        titleRow.createCell(2).setCellValue("FixationNumber");
+        titleRow.createCell(3).setCellValue("FixationIndex");
+        titleRow.createCell(4).setCellValue("FixationDuration");
+        titleRow.createCell(5).setCellValue("FixationDurationAll");
+        titleRow.createCell(6).setCellValue("FixationDiv");
         int index=1;
 
 
 
-        for (int i = 0; i < task2result.size(); i++) {
-            AOI aoi = task2result.get(i);
+        for (int i = 0; i < task4Outputs.size(); i++) {
+            Task4Output aoi = task4Outputs.get(i);
             Row record = sheet.createRow(index);
             record.createCell(0).setCellValue(aoi.getParticipantName());
-            record.createCell(1).setCellValue(aoi.getAQIFixationNumber());
-            record.createCell(2).setCellValue(aoi.getINTERFACEFixationNumber());
-            record.createCell(3).setCellValue(aoi.getDiv());
-            record.createCell(4).setCellValue(aoi.getFirstFixationTimestamp());
-            record.createCell(5).setCellValue(aoi.getFirstClickTimestamp());
-            record.createCell(6).setCellValue(aoi.getSub());
+            record.createCell(1).setCellValue(aoi.getAOIIndex());
+            record.createCell(2).setCellValue(aoi.getFixationNumber());
+            record.createCell(3).setCellValue(aoi.getFixationIndex());
+            record.createCell(4).setCellValue(aoi.getFixationDuration());
+            record.createCell(5).setCellValue(aoi.getFixationDurationAll());
+            record.createCell(6).setCellValue(aoi.getFixationDiv());
             index ++;
         }
 
@@ -108,7 +138,7 @@ public class Task1 {
         //遍历所有的行
         for (Row row : sheet) {
             step++;
-            if(step >= 500000) return;
+            if(step >= 11836) return;
             if(row.getRowNum() == 0) {
                 continue;
             }
