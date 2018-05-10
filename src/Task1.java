@@ -19,13 +19,13 @@ public class Task1 {
     public static void main(String[] args) {
         String outputPath = "c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/任务三v2.xlsx";
         deathNote.add("P04邢睿");
-        deathNote.add("P09路雅琦");
+        deathNote.add("P07陈宇澎");
         deathNote.add("P12晏茂源");
-        deathNote.add("P14唐青青");
-        deathNote.add("P17李显鑫");
         deathNote.add("P18卢泉竹");
-        deathNote.add("P25王俊");
-        deathNote.add("P27柳叶");
+        deathNote.add("P16毕玉涵");
+        deathNote.add("P13何婵");
+        deathNote.add("P26舒成祥");
+        deathNote.add("P23张亮");
         deathNote.add("P38杨依依");
 
         try{
