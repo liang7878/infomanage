@@ -11,17 +11,13 @@ import java.util.HashMap;
 
 public class Task1 {
 
-    public static HashMap<String, ArrayList<Point>> resultHashmap = new HashMap<>(5000);
+    public static HashMap<String, ArrayList<Record>> resultHashmap = new HashMap<>(5000);
     public static ArrayList<String> deathNote = new ArrayList<>();
-    public static HashMap<String, HashMap<Integer, AOI>> finalresult = new HashMap<>();
-    public static HashMap<String, ArrayList<Click>> clickResult = new HashMap<>();
-    public static ArrayList<AOI> task2result = new ArrayList<>();
-    public static ArrayList<Task4Output> task4Outputs = new ArrayList<>();
+    public static ArrayList<Saccade> task3result = new ArrayList<>(2000000);
 
 
     public static void main(String[] args) {
         String outputPath = "c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/output.xlsx";
-        System.out.println("Hello World!");
         deathNote.add("P04邢睿");
         deathNote.add("P09路雅琦");
         deathNote.add("P12晏茂源");
@@ -33,50 +29,50 @@ public class Task1 {
         deathNote.add("P38杨依依");
 
         try{
-            readXlsx("c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/4.xlsx");
+            ArrayList<String> paths = getFilenameList("c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task3/");
+            for (int i = 0; i < paths.size(); i++) {
+                System.out.println("processing " + paths.get(i));
+                resultHashmap = new HashMap<>();
+                readXlsx("c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task3/"+ paths.get(i));
+
+                for(String key: resultHashmap.keySet()) {
+                    if(key.equals("P05刘顺")) {
+                        System.out.println("break");
+                    }
+                    if(deathNote.contains(key)) continue;
+
+                    ArrayList<Record> slist = resultHashmap.get(key);
+                    ArrayList<Saccade> tmp = new ArrayList<>();
+
+                    for (int j = 0; j < slist.size(); j++) {
+                        Record pri;
+                        Record current = slist.get(j);
+                        if(j == 0) {
+                            pri = null;
+                        }else {
+                            pri = slist.get(j-1);
+                        }
+                        tmp.add(new Saccade(pri, current));
+                    }
+
+                    Double saccadeLengthAll = 0d;
+                    for (int j = 0; j < tmp.size(); j++) {
+                        saccadeLengthAll+= tmp.get(j).getSaccadeLength();
+                    }
+
+                    for (int j = 0; j < tmp.size(); j++) {
+                        tmp.get(j).setSaccadeLengthAll(saccadeLengthAll);
+                        tmp.get(j).setSaccadeNumber((long) tmp.size());
+                        tmp.get(j).setSaccadeLengthAverage(saccadeLengthAll/tmp.size());
+                    }
+
+                    task3result.addAll(tmp);
+                }
+            }
         } catch (IOException ioe) {
             System.out.println(ioe);
         }
 
-
-        for(String key: resultHashmap.keySet()) {
-            if(deathNote.contains(key)) continue;
-            ArrayList<Task4Output> tmpResult = new ArrayList<>();
-            ArrayList<Point> tmp = resultHashmap.get(key);
-            long AQI1Duration =0l;
-            long AQI2Duration =0l;
-            long fixationNo1 = 0l;
-            long fixationNo2 = 0l;
-            for (int i = 0; i < tmp.size(); i++) {
-                Point point = tmp.get(i);
-                if(point.getInAOI1()) {
-                    fixationNo1++;
-                    AQI1Duration += point.getGazeEventDuration();
-                }
-                if(point.getInAOI2()) {
-                    fixationNo2++;
-                    AQI2Duration += point.getGazeEventDuration();
-                }
-                Task4Output task4Output = new Task4Output(point);
-                if(task4Output.getAOIIndex() != -1) {
-                    tmpResult.add(new Task4Output(point));
-                }
-            }
-
-            for (int i = 0; i < tmpResult.size(); i++) {
-                if(tmpResult.get(i).getAOIIndex() == 1) {
-                    tmpResult.get(i).setFixationDurationAll(AQI1Duration);
-                    tmpResult.get(i).setFixationNumber(fixationNo1);
-                }
-                if(tmpResult.get(i).getAOIIndex() == 2) {
-                    tmpResult.get(i).setFixationDurationAll(AQI2Duration);
-                    tmpResult.get(i).setFixationNumber(fixationNo2);
-                }
-
-                tmpResult.get(i).setFixationDiv(Double.valueOf(String.valueOf(fixationNo2))/Double.valueOf(String.valueOf(fixationNo1)));
-            }
-            task4Outputs.addAll(tmpResult);
-        }
 
         File file = new File(outputPath);
         Workbook workbook = new XSSFWorkbook();
@@ -84,26 +80,26 @@ public class Task1 {
         Sheet sheet = workbook.createSheet();
         Row titleRow = sheet.createRow(0);
         titleRow.createCell(0).setCellValue("ParticipantName");
-        titleRow.createCell(1).setCellValue("AOIIndex");
-        titleRow.createCell(2).setCellValue("FixationNumber");
-        titleRow.createCell(3).setCellValue("FixationIndex");
-        titleRow.createCell(4).setCellValue("FixationDuration");
-        titleRow.createCell(5).setCellValue("FixationDurationAll");
-        titleRow.createCell(6).setCellValue("FixationDiv");
+        titleRow.createCell(1).setCellValue("SaccadeNumber");
+        titleRow.createCell(2).setCellValue("SaccadeIndex");
+        titleRow.createCell(3).setCellValue("RelativeSaccadeDirection");
+        titleRow.createCell(4).setCellValue("SaccadeLength");
+        titleRow.createCell(5).setCellValue("SaccadeLengthAverage");
+        titleRow.createCell(6).setCellValue("SaccadeLengthAll");
+        titleRow.createCell(7).setCellValue("MediaName");
         int index=1;
 
-
-
-        for (int i = 0; i < task4Outputs.size(); i++) {
-            Task4Output aoi = task4Outputs.get(i);
+        for (int k = 0; k < task3result.size(); k++) {
+            Saccade aoi = task3result.get(k);
             Row record = sheet.createRow(index);
             record.createCell(0).setCellValue(aoi.getParticipantName());
-            record.createCell(1).setCellValue(aoi.getAOIIndex());
-            record.createCell(2).setCellValue(aoi.getFixationNumber());
-            record.createCell(3).setCellValue(aoi.getFixationIndex());
-            record.createCell(4).setCellValue(aoi.getFixationDuration());
-            record.createCell(5).setCellValue(aoi.getFixationDurationAll());
-            record.createCell(6).setCellValue(aoi.getFixationDiv());
+            record.createCell(1).setCellValue(aoi.getSaccadeNumber());
+            record.createCell(2).setCellValue(aoi.getSaccadeIndex());
+            record.createCell(3).setCellValue(aoi.getRelativeSaccadeDirection());
+            record.createCell(4).setCellValue(aoi.getSaccadeLength());
+            record.createCell(5).setCellValue(aoi.getSaccadeLengthAverage());
+            record.createCell(6).setCellValue(aoi.getSaccadeLengthAll());
+            record.createCell(7).setCellValue(aoi.getMediaName());
             index ++;
         }
 
@@ -115,8 +111,6 @@ public class Task1 {
                 fos.close();
             }
 
-
-            System.out.println("success");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -124,6 +118,10 @@ public class Task1 {
         }
 
         System.out.println("finish");
+    }
+
+    private static void processFile() {
+
     }
 
     public static void readXlsx(String path) throws IOException {
@@ -139,7 +137,7 @@ public class Task1 {
         for (Row row : sheet) {
             step++;
             if(step >= 11836) return;
-            if(row.getRowNum() == 0) {
+            if(row.getRowNum() == 0 || row.getPhysicalNumberOfCells() == 0) {
                 continue;
             }
 //            if(row.getRowNum() == 53352 ||
@@ -161,66 +159,42 @@ public class Task1 {
 //                continue;
 //            }
 
-            System.out.println("processing row " + (row.getRowNum()+1));
+//            System.out.println("processing row " + (row.getRowNum()+1));
             //遍历所有的列
             Record record = new Record(row);
             if(record.isLegal()) {
-                if(record.getType().equals("click")) {
-
-
-                    Click click = new Click(record);
-
-                    if(!click.getInAOI1() && !click.getInAQI2()) {
-
-                    } else {
-                        if(clickResult.get(record.getParticipantName()) == null) {
-                            clickResult.put(record.getParticipantName(), new ArrayList<>());
-                        }
-                        clickResult.get(record.getParticipantName()).add(new Click(record));
-                    }
-
-                } else if(record.getType().equals("Fixation")) {
-                    if(point.addRecord(record)){
-                        continue;
-                    }else {
-                        if(resultHashmap.get(point.getParticipantName()) == null) {
-                            resultHashmap.put(point.getParticipantName(), new ArrayList<>(1000));
-                        }
-
-                        resultHashmap.get(point.getParticipantName()).add(point);
-//                    result.add(point);
-                        point = new Point();
-                        point.addRecord(record);
-                    }
-                } else if(record.getType().equals("both")) {
-                    Click click = new Click(record);
-
-                    if(!click.getInAOI1() && !click.getInAQI2()) {
-
-                    } else {
-                        if(clickResult.get(record.getParticipantName()) == null) {
-                            clickResult.put(record.getParticipantName(), new ArrayList<>());
-                        }
-                        clickResult.get(record.getParticipantName()).add(new Click(record));
-                    }
-
-                    if(point.addRecord(record)){
-                        continue;
-                    }else {
-                        if(resultHashmap.get(point.getParticipantName()) == null) {
-                            resultHashmap.put(point.getParticipantName(), new ArrayList<>(1000));
-                        }
-
-                        resultHashmap.get(point.getParticipantName()).add(point);
-//                    result.add(point);
-                        point = new Point();
-                        point.addRecord(record);
-                    }
+                if(resultHashmap.get(record.getParticipantName()) == null) {
+                    resultHashmap.put(record.getParticipantName(), new ArrayList<>(1000));
                 }
+
+                resultHashmap.get(record.getParticipantName()).add(record);
+//                    result.add(point);
             }
 
         }
 
         System.out.println("finish");
+    }
+
+    public static ArrayList<String> getFilenameList(String path) {
+        ArrayList<String> result = new ArrayList<>();
+        File dir = new File(path);
+
+        if(!dir.exists()) {
+            System.out.println("Path Error!");
+            return null;
+        }
+
+        if(!dir.isDirectory()) {
+            System.out.println("Not a Dir");
+            return null;
+        }
+
+        String[] list = dir.list();
+        for (int i = 0; i < list.length; i++) {
+            result.add(list[i]);
+        }
+
+        return result;
     }
 }
