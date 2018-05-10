@@ -17,7 +17,7 @@ public class Task1 {
 
 
     public static void main(String[] args) {
-        String outputPath = "c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/output.xlsx";
+        String outputPath = "c://Users/ShiChengliang/IdeaProjects/EyesControl/doc/task1/任务三v2.xlsx";
         deathNote.add("P04邢睿");
         deathNote.add("P09路雅琦");
         deathNote.add("P12晏茂源");
@@ -136,7 +136,7 @@ public class Task1 {
         //遍历所有的行
         for (Row row : sheet) {
             step++;
-            if(step >= 11836) return;
+//            if(step >= 11836) return;
             if(row.getRowNum() == 0 || row.getPhysicalNumberOfCells() == 0) {
                 continue;
             }
@@ -166,8 +166,9 @@ public class Task1 {
                 if(resultHashmap.get(record.getParticipantName()) == null) {
                     resultHashmap.put(record.getParticipantName(), new ArrayList<>(1000));
                 }
-
-                resultHashmap.get(record.getParticipantName()).add(record);
+                if(record.getGazePointX_MCSpx() != -1 && record.getGazePointY_MCSpx() != -1) {
+                    resultHashmap.get(record.getParticipantName()).add(record);
+                }
 //                    result.add(point);
             }
 
